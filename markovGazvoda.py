@@ -7,7 +7,7 @@
 * @author Miha Gazvoda
 * @version 25/04/2016
 *
-* Program makes information analysis of a file and produce Markov chain out of it.
+* Program makes information analysis of a file and produces Markov chain out of it.
 '''
 
 from collections import defaultdict, Counter
@@ -17,21 +17,21 @@ from random import choice
 import codecs
 
 
-# naredi analizo besedila samo z lastnimi verjetnostmi besed
+# analysis based on word probabilities
 def basicFileAnalysis(fileName):
-    # prestej besede
+    # count words
     wordCount = Counter(data)
 
-    # izracun lastnih verjetnosti
+    # calculate word probabilities
     wordProbability = {}
     allWords = float(sum(wordCount.values()))
     for word in wordCount:
         wordProbability[word] = wordCount[word] / allWords
 
-    # entropija enakomerno verjetnih besed
+    # entropy of uniformly distributed words
     uniformEntropy = -log(float(1) / len(wordCount), 2)
 
-    # prava entropija
+    # real entropy
     entropy = 0
     for probability in wordProbability.values():
         entropy = -probability * log(probability, 2) + entropy
@@ -39,26 +39,26 @@ def basicFileAnalysis(fileName):
     return wordCount, wordProbability, uniformEntropy, entropy
 
 
-# naredi analizo besedila relativno na prejsnjo besedo
+# analysis based on the previous word
 def advancedFileAnalysis(fileName):
-    # izracuna relativne frekvence
+    # relative frequencies
     wordRelativeCount = defaultdict(lambda: defaultdict(int))
     prevWord = data[0]
     for word in data[1:]:
         wordRelativeCount[prevWord][word] += 1
         prevWord = word
 
-    # pogojna verjetnost & pogojna entropija
+    # conditional probability and entropy
     wordRelativeProbability = defaultdict(lambda: defaultdict(int))
     relativeEntropy = {}
     ent = 0
     for parentWord in wordRelativeCount.keys():
         ent = 0
         for childWord in wordRelativeCount[parentWord].keys():
-            # pogojna verjetnost
+            # calculate conditional probability
             wordRelativeProbability[parentWord][childWord] = float(wordRelativeCount[parentWord][childWord]) / sum(
                 wordRelativeCount[parentWord].values())
-            # racunanje pogojne entropije
+            # calculate conditional entropy
             ent = -wordRelativeProbability[parentWord][childWord] * \
                   log(wordRelativeProbability[parentWord][childWord], 2) + ent
         relativeEntropy[parentWord] = ent
@@ -66,15 +66,15 @@ def advancedFileAnalysis(fileName):
     return wordRelativeCount, wordRelativeProbability, relativeEntropy
 
 
-# ustvari Markovovo verigo slovenskih besed
+# creates Markov chain
 def createMarkovChain(wordCount, wordRelativeCount, textLength):
     text = []
     for i in range(textLength):
         if i == 0:
-            # izbira prve besede
+            # pick the first word
             word = choice([x for x in wordCount for y in range(wordCount[x])])
         else:
-            # izbira ostalih besede
+            # pick other words
             word = choice([x for x in wordRelativeCount[prevWord]
                            for y in range(wordRelativeCount[prevWord][x])])
         text.append(word)
